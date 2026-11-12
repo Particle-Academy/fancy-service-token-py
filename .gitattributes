@@ -1,0 +1,5 @@
+# Line endings are pinned, not left to a clone's core.autocrlf: the conformance
+# file is compared by SHA-256 across three repositories, so a CRLF checkout of
+# it would fail the suite on a perfectly good copy.
+* text=auto eol=lf
+conformance/*.json -text

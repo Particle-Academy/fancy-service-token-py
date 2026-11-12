@@ -1,0 +1,1371 @@
+{
+  "suite": "fancy-service-token/v1",
+  "format": "fst1",
+  "generated_by": "fancy-service-token-py/scripts/build_fixtures.py",
+  "note": "Test keys only. Copy this file byte for byte; every leg pins its SHA-256.",
+  "sign": [
+    {
+      "name": "sign_current_key",
+      "why": "The signer, given these inputs, produces exactly the valid token.",
+      "input": {
+        "kid": "k2026b",
+        "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+        "issuer": "laravel-app",
+        "audience": "ocr-sidecar",
+        "now": 1793000000,
+        "ttl": 60,
+        "request_id": "req-01HZX3K8Q2",
+        "nonce": "n0nce-AAAAAAAAAAAAAAAA"
+      },
+      "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4"
+    },
+    {
+      "name": "sign_without_nonce",
+      "why": "Nonce off gives an empty seventh field.",
+      "input": {
+        "kid": "k2026b",
+        "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+        "issuer": "laravel-app",
+        "audience": "ocr-sidecar",
+        "now": 1793000000,
+        "ttl": 60,
+        "request_id": "req-01HZX3K8Q2",
+        "nonce": ""
+      },
+      "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgo.rpdMqriNpuKhp7OmWwcOXfZ1pGVa-a6dZCHX96aaFGk"
+    }
+  ],
+  "verify": [
+    {
+      "name": "valid",
+      "why": "A current-key token for this audience, inside its window.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "valid_at_skew_before_iat",
+      "why": "now = iat - skew is still accepted.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1792999990,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "valid_last_second",
+      "why": "now = exp + skew - 1 is the last accepted second.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000069,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "expired",
+      "why": "now = exp + skew: exp is exclusive, so this is refused.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000070,
+          "expect": {
+            "ok": false,
+            "reason": "expired",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "expired_long_ago",
+      "why": "A day after expiry.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793086460,
+          "expect": {
+            "ok": false,
+            "reason": "expired",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "not_yet_valid",
+      "why": "now = iat - skew - 1.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1792999989,
+          "expect": {
+            "ok": false,
+            "reason": "not_yet_valid",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "wrong_audience",
+      "why": "Signed correctly, for another sidecar.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCmJpbGxpbmctc2lkZWNhcgoxNzkzMDAwMDAwCjE3OTMwMDAwNjAKcmVxLTAxSFpYM0s4UTIKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.oaT_ykTYFRQG82T1rA3wnQFkf7jsl3Ft0uPhDxyzGNY",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "wrong_audience",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "tampered_signature",
+      "why": "One signature character changed.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNBzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "bad_signature",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "tampered_payload",
+      "why": "The audience rewritten after signing; the old signature kept.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCmJpbGxpbmctc2lkZWNhcgoxNzkzMDAwMDAwCjE3OTMwMDAwNjAKcmVxLTAxSFpYM0s4UTIKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "bad_signature",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "signed_with_unknown_key_claiming_current_kid",
+      "why": "kid says k2026b, signed with a key the verifier does not hold.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.DCn6Z_R1XPIbbxmmSHnTCpZEqF2ai35xe794guzk31Y",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "bad_signature",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "unknown_kid",
+      "why": "A kid the verifier has never heard of.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.ay1vdGhlcgpsYXJhdmVsLWFwcApvY3Itc2lkZWNhcgoxNzkzMDAwMDAwCjE3OTMwMDAwNjAKcmVxLTAxSFpYM0s4UTIKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.irXGqJ846suPxTJBKUvjqGdLgjyArpppqVw6HR39lzo",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "bad_signature",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "wrong_issuer",
+      "why": "Signed with a held key but naming another issuer: no key is held for that issuer.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCm90aGVyLWFwcApvY3Itc2lkZWNhcgoxNzkzMDAwMDAwCjE3OTMwMDAwNjAKcmVxLTAxSFpYM0s4UTIKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.6btvV7bG3Qz4EsmcNqOeMai-1VvJ2bJ7Z82X6Eq-X9o",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "bad_signature",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "rotated_previous_key_inside_grace",
+      "why": "Signed with the previous key, now <= its accept_until.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZhCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.H-GZNZeKNH5sFAiRUqWpFtjqqfUVCSF0H9F6aQl4FqY",
+          "now": 1793000030,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "rotated_previous_key_outside_grace",
+      "why": "Signed with the previous key, now > its accept_until.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZhCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.H-GZNZeKNH5sFAiRUqWpFtjqqfUVCSF0H9F6aQl4FqY",
+          "now": 1793000031,
+          "expect": {
+            "ok": false,
+            "reason": "bad_signature",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "rotated_current_key_unaffected_by_grace",
+      "why": "The current key keeps working after the previous key's grace ends.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000031,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "missing",
+      "why": "No header at all.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": null,
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "missing",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "missing_empty",
+      "why": "A header present but empty.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "missing",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_prefix",
+      "why": "Another format's token.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst2.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_jwt_shape",
+      "why": "A JWT-looking string is not this format.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_two_parts",
+      "why": "Signature missing.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_four_parts",
+      "why": "An extra segment.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4.x",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_padding",
+      "why": "base64url must be unpadded.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4=",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_noncanonical_signature",
+      "why": "A second spelling of the same signature bytes.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S5",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_bad_alphabet",
+      "why": "Standard base64 characters are not base64url.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUF+.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_whitespace",
+      "why": "Surrounding whitespace is not trimmed.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": " fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_six_fields",
+      "why": "The payload must have exactly seven LF-separated fields.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMg.8BBOci7d1cPEF1aTUIwwF4RE_2W6O3p8qcYXHLLoKKQ",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_leading_zero_time",
+      "why": "Times are canonical decimal: no leading zero.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjAxNzkzMDAwMDAwCjE3OTMwMDAwNjAKcmVxLTAxSFpYM0s4UTIKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.yWyDzX6x49TgKIWRzBCX8lwnE6tz-qlLQRe8L511bLw",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_crlf",
+      "why": "A CR inside a field.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMQ0KbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.YtS9p7zYCxbG7j8IxurKR1xW1jKFI54EWrV8W7Xa6y8",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_non_ascii",
+      "why": "Fields are ASCII.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtw6kKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.9LGe2Zg7Da9n8-W5XoA_bW1g6caQoKV3aWnWlSVyfB8",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_exp_not_after_iat",
+      "why": "exp must be greater than iat.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDAwMApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.hRgnJZ7_9fK0xqWqnggHg9g9zph9aEY1Du4q_EApCGo",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_lifetime_too_long",
+      "why": "exp - iat above max_lifetime: no correct signer produces it.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDMwMQpyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.dm_Y5mgudTWZ9azwWRrtT9zCcrrx53n4N5D0lwK2aMk",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_nonce_required",
+      "why": "No nonce, and the verifier requires one.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgo.rpdMqriNpuKhp7OmWwcOXfZ1pGVa-a6dZCHX96aaFGk",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "valid_without_nonce_when_not_required",
+      "why": "require_nonce false accepts an empty nonce.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": false,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgo.rpdMqriNpuKhp7OmWwcOXfZ1pGVa-a6dZCHX96aaFGk",
+          "now": 1793000005,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_too_long",
+      "why": "Longer than max_token_bytes.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 200,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycgpubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubg.r1XieuQ9pYEI--XtC1pPMX0JGubEXcfHvLZBVpCipT8",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "malformed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "replayed",
+      "why": "The same nonce twice: accepted once, then refused.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        },
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000006,
+          "expect": {
+            "ok": false,
+            "reason": "replayed",
+            "request_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "replay_does_not_block_a_fresh_nonce",
+      "why": "A new nonce after a replay is accepted.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        },
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "replayed",
+            "request_id": null
+          }
+        },
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1CQkJCQkJCQkJCQkJCQkJC.3PwQy84XT4AQkiZGPpSACde1DHVVkbjkni-uYCshh0o",
+          "now": 1793000005,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "refused_token_does_not_spend_its_nonce",
+      "why": "A wrong-audience token with nonce N must not block a valid token with nonce N.",
+      "verifier": {
+        "audience": "ocr-sidecar",
+        "issuer": "laravel-app",
+        "clock_skew": 10,
+        "max_lifetime": 300,
+        "max_token_bytes": 1024,
+        "require_nonce": true,
+        "keys": [
+          {
+            "kid": "k2026b",
+            "secret_hex": "bd0f4f9b9104d092150931507376ffe10de6980ce196a07e693af1cc464155f3",
+            "accept_until": null
+          },
+          {
+            "kid": "k2026a",
+            "secret_hex": "78e5f2ed28e43341c85b9e8c52540a0027245ba4646ca2d31b2a640138c8ef00",
+            "accept_until": 1793000030
+          }
+        ]
+      },
+      "steps": [
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCmJpbGxpbmctc2lkZWNhcgoxNzkzMDAwMDAwCjE3OTMwMDAwNjAKcmVxLTAxSFpYM0s4UTIKbjBuY2UtQUFBQUFBQUFBQUFBQUFBQQ.oaT_ykTYFRQG82T1rA3wnQFkf7jsl3Ft0uPhDxyzGNY",
+          "now": 1793000005,
+          "expect": {
+            "ok": false,
+            "reason": "wrong_audience",
+            "request_id": null
+          }
+        },
+        {
+          "token": "fst1.azIwMjZiCmxhcmF2ZWwtYXBwCm9jci1zaWRlY2FyCjE3OTMwMDAwMDAKMTc5MzAwMDA2MApyZXEtMDFIWlgzSzhRMgpuMG5jZS1BQUFBQUFBQUFBQUFBQUFB.vSKWCA_2VNXzp3Ind2mq2fFwOwa3m2qtBV3MGX1V2S4",
+          "now": 1793000005,
+          "expect": {
+            "ok": true,
+            "reason": null,
+            "request_id": "req-01HZX3K8Q2"
+          }
+        }
+      ]
+    }
+  ]
+}

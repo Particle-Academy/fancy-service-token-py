@@ -1,0 +1,97 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+# The repository is `fancy-service-token-py`; the distribution drops the suffix,
+# like every other Python package in the kit (publishing.md).
+name = "fancy-service-token"
+version = "0.1.0"
+description = "Verify Fancy service tokens in a Python sidecar: a framework-free core plus Starlette/FastAPI middleware that refuses before the body is read, with a named reason. Standard library only."
+readme = "README.md"
+requires-python = ">=3.11"
+# PEP 639: an SPDX expression, and NO license classifier.
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Particle Academy" }]
+keywords = [
+    "service-token",
+    "hmac",
+    "sidecar",
+    "authentication",
+    "asgi",
+    "starlette",
+    "fastapi",
+    "middleware",
+    "particle-academy",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: AsyncIO",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+
+# ZERO runtime dependencies. The verifier is `hmac` + `base64` from the standard
+# library, and the middleware is pure ASGI. Starlette is imported only by the
+# optional `fancy_service_token.depends` module, which a Starlette or FastAPI
+# app already has installed.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Particle-Academy/fancy-service-token-py"
+Issues = "https://github.com/Particle-Academy/fancy-service-token-py/issues"
+Source = "https://github.com/Particle-Academy/fancy-service-token-py"
+
+[dependency-groups]
+# starlette and fastapi are the frameworks this package EXISTS to integrate
+# with, as TEST dependencies only -- the framework carve-out in the envelope's
+# RULES.md (owner, 2026-10-06). Without them the "never reads the body" claim
+# would be proven only against a hand-written ASGI driver, never against the
+# route machinery a real sidecar runs. `dependencies` stays empty, and the
+# no-dependencies CI job runs the core suite with both absent.
+test = ["pytest>=8.0", "starlette>=1.0", "fastapi>=0.160"]
+lint = ["ruff>=0.16"]
+typecheck = ["mypy>=1.11"]
+dev = [{ include-group = "test" }, { include-group = "lint" }, { include-group = "typecheck" }]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fancy_service_token"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/conformance", "/README.md", "/CHANGELOG.md", "/AGENTS.md", "/LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# importlib mode pairs with src-layout: the tests exercise the INSTALLED package.
+addopts = "--import-mode=importlib -ra"
+filterwarnings = ["error"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "N", "C4", "PT"]
+
+[tool.ruff.lint.per-file-ignores]
+# Framework imports are local to the tests that need them, so the core suite
+# still runs with starlette and fastapi absent.
+# B008: `Depends(...)` in a default is FastAPI's own idiom.
+"tests/*" = ["PT011", "E402", "N802", "N806", "B008"]
+"scripts/*" = ["E501"]
+"tests/sabotage.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["fancy_service_token"]
+mypy_path = "src"
+strict = true
