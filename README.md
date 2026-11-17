@@ -16,6 +16,13 @@ other caller with a named reason.
 The Node mirror is [`@particle-academy/fancy-service-token`](https://github.com/Particle-Academy/fancy-service-token-js).
 All three legs run the same fixture file byte for byte.
 
+<!-- fancy-agents-note:start -->
+> **For agents.** Every Fancy package, this one included, is listed on the
+> Fancy MCP catalog server at `https://ui.particle.academy/mcp` (streamable HTTP, no API key;
+> MCP id `fancy-ui`), with install commands and docs. How an agent installs
+> and uses this package is in [AGENTS.md](https://github.com/Particle-Academy/fancy-service-token-py/blob/main/AGENTS.md).
+<!-- fancy-agents-note:end -->
+
 ## Install
 
 ```bash
