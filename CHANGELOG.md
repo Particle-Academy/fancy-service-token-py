@@ -20,14 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **The body no longer has `reason`; read it from `WWW-Authenticate`**
   (`FancyServiceToken error="<reason>"`, unchanged since 0.1.0). If you only
   checked the 401 status, do nothing.
-- **BREAKING (FastAPI/Starlette, only without the middleware):**
-  `service_token_claims` raises `ServiceTokenRefused` instead of
-  `HTTPException(401, detail="service_token_refused")`, because FastAPI renders
-  an `HTTPException` as `{"detail": ...}`. `ServiceTokenMiddleware` renders it as
-  the same 401 envelope, so with the middleware installed, do nothing. An app
-  that uses the dependency WITHOUT the middleware must register
-  `app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)`;
-  otherwise the refusal is a 500 (still never a pass).
+- **BREAKING (FastAPI/Starlette dependency, only without the middleware):**
+  `service_token_claims` refuses with `ServiceTokenRefused` (from
+  `fancy_service_token.depends`), a Starlette `HTTPException` with status 401
+  and the `WWW-Authenticate`, `x-request-id` and `Cache-Control: no-store`
+  headers, instead of `HTTPException(401, detail="service_token_refused")`.
+  Behind `ServiceTokenMiddleware` (an exempt path) the body is the exact
+  envelope: do nothing. Without the middleware, FastAPI's body is now
+  `{"detail": <envelope>}` (Starlette's, the sentence as plain text); still a
+  401. **Register
+  `app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)`
+  to get the exact envelope.** If you only checked the 401 status, do nothing.
 - A WebSocket refusal is unchanged: close `1008` before `accept`, no body.
 
 ### Added
@@ -39,7 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `^[A-Za-z0-9._:-]{1,128}$` (sent once), else a fresh UUID v4; echoed as an
   `x-request-id` response header. `ServiceTokenMiddleware(request_id_header=...)`
   changes the header name.
-- `ServiceTokenRefused` and `fancy_service_token.depends.service_token_refused_handler`.
+- `fancy_service_token.depends.ServiceTokenRefused` and
+  `service_token_refused_handler`, and the framework-free base
+  `fancy_service_token.ServiceTokenRefusal`, which `ServiceTokenMiddleware`
+  renders as the envelope when an app raises it.
 - The suite validates every refusal body against a byte copy of the envelope
   schema with a small first-party validator (no new dependency).
 

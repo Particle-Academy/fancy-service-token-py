@@ -9,12 +9,14 @@ import pytest
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel, field_validator
 
-from fancy_service_token import Claims, ServiceTokenMiddleware, ServiceTokenRefused
-from fancy_service_token.depends import service_token_claims, service_token_refused_handler
+from fancy_service_token import Claims, ServiceTokenMiddleware
+from fancy_service_token.depends import ServiceTokenRefused, service_token_claims, service_token_refused_handler
 
 from .asgi import call
+from .schema import validate
 from .test_middleware import (
     HEADER,
+    MESSAGES,
     TAMPERED,
     VALID,
     WRONG_AUDIENCE,
@@ -99,14 +101,72 @@ def test_fastapi_dependency_on_an_exempt_path_refuses_with_the_envelope_through_
     assert_refusal(result, "missing")
 
 
-def test_fastapi_dependency_with_neither_middleware_nor_handler_fails_closed() -> None:
-    # Misconfigured twice over: nothing can render the refusal, so it is a
-    # server error rather than a pass. Never a 200.
+def test_fastapi_dependency_with_middleware_and_handler_is_still_the_exact_envelope() -> None:
+    app = FastAPI()
+    app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)
+    app.add_middleware(ServiceTokenMiddleware, verifier=make_verifier(), exempt_paths=["/work"])
+
+    @app.get("/work")
+    def work(claims: Claims = Depends(service_token_claims)) -> dict[str, str]:
+        return {"rid": claims.request_id}
+
+    assert_refusal(call(app, method="GET"), "missing")
+
+
+def test_fastapi_dependency_with_neither_middleware_nor_handler_is_a_401_with_the_envelope_as_detail() -> None:
+    # Misconfigured twice over. FastAPI's own HTTPException handler renders it:
+    # still a 401 with the right headers, never a 500 and never a pass.
     app = FastAPI()
 
     @app.get("/work")
     def work(claims: Claims = Depends(service_token_claims)) -> dict[str, str]:
         return {"rid": claims.request_id}
 
-    with pytest.raises(ServiceTokenRefused):
-        call(app, method="GET", headers=[(HEADER, VALID.encode())])
+    result = call(app, method="GET", headers=[(HEADER, VALID.encode()), (b"x-request-id", b"rid-9")])
+    assert result.status == 401
+    body = result.json()
+    assert sorted(body) == ["detail"]
+    envelope = body["detail"]
+    assert validate(envelope) == []
+    assert envelope == {
+        "error": "service_token_refused",
+        "message": MESSAGES["messages"]["missing"],
+        "requestId": "rid-9",
+    }
+    assert result.headers["www-authenticate"] == 'FancyServiceToken error="missing"'
+    assert result.headers["x-request-id"] == "rid-9"
+    assert result.headers["cache-control"] == "no-store"
+
+
+def test_service_token_refused_is_an_http_exception() -> None:
+    from starlette.exceptions import HTTPException
+
+    from fancy_service_token import ServiceTokenRefusal
+
+    assert issubclass(ServiceTokenRefused, HTTPException)
+    assert issubclass(ServiceTokenRefused, ServiceTokenRefusal)
+
+
+@pytest.mark.parametrize("handler", [False, True])
+def test_starlette_dependency_without_middleware_is_a_401(handler: bool) -> None:
+    from starlette.applications import Starlette
+    from starlette.requests import Request
+    from starlette.responses import JSONResponse
+    from starlette.routing import Route
+
+    async def work(request: Request) -> JSONResponse:
+        return JSONResponse({"rid": service_token_claims(request).request_id})
+
+    app = Starlette(routes=[Route("/work", work)])
+    if handler:
+        app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)
+    result = call(app, method="GET", headers=[(b"x-request-id", b"rid-3")])
+    if handler:
+        assert_refusal(result, "missing")
+    else:
+        # Starlette renders an HTTPException's detail as plain text, so it gets
+        # the sentence; the headers are the same.
+        assert result.status == 401
+        assert result.body.decode() == MESSAGES["messages"]["missing"]
+        assert result.headers["www-authenticate"] == 'FancyServiceToken error="missing"'
+        assert result.headers["x-request-id"] == "rid-3"

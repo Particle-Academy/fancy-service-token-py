@@ -28,6 +28,10 @@ ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 logger = logging.getLogger("fancy_service_token")
 
 STATE_KEY = "service_token"
+# Set in the scope of every request ServiceTokenMiddleware lets through
+# unverified (an exempt path), so `service_token_claims` knows the middleware is
+# outside it and can render a refusal.
+MIDDLEWARE_KEY = "fancy_service_token.middleware"
 _request_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("fancy_service_token_request_id", default=None)
 
 
@@ -49,11 +53,12 @@ REFUSAL_MESSAGES: MappingProxyType[Reason, str] = MappingProxyType(
 _RID_CHARS = frozenset(b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:-")
 
 
-class ServiceTokenRefused(Exception):  # noqa: N818 -- a refusal, not an error in the code
-    """Raised by `service_token_claims` when nothing verified this request.
+class ServiceTokenRefusal(Exception):  # noqa: N818 -- a refusal, not an error in the code
+    """A refusal raised inside the app, which `ServiceTokenMiddleware` renders as
+    the same 401 envelope it sends itself. Imports no framework.
 
-    `ServiceTokenMiddleware` turns it into the same 401 envelope it sends itself.
-    Without the middleware, register `depends.service_token_refused_handler`.
+    `depends.ServiceTokenRefused` is the Starlette/FastAPI `HTTPException` form
+    of it, for an app without the middleware.
     """
 
     def __init__(self, reason: Reason = Reason.MISSING) -> None:
@@ -127,7 +132,7 @@ class ServiceTokenMiddleware:
             await self.app(scope, receive, send)
             return
         if scope.get("path") in self.exempt_paths:
-            await self._run(scope, receive, send)
+            await self._run({**scope, MIDDLEWARE_KEY: True}, receive, send)
             return
 
         values = [v for k, v in scope.get("headers", ()) if k.lower() == self.header]
@@ -164,7 +169,7 @@ class ServiceTokenMiddleware:
             _request_id.reset(token)
 
     async def _run(self, scope: Scope, receive: Receive, send: Send) -> None:
-        """Call the app; a `ServiceTokenRefused` from inside it becomes the same refusal."""
+        """Call the app; a `ServiceTokenRefusal` from inside it becomes the same refusal."""
         started = False
 
         async def tracking(message: Message) -> None:
@@ -175,7 +180,7 @@ class ServiceTokenMiddleware:
 
         try:
             await self.app(scope, receive, tracking)
-        except ServiceTokenRefused as exc:
+        except ServiceTokenRefusal as exc:
             if started:
                 raise
             logger.warning(

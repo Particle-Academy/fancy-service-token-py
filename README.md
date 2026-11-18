@@ -55,20 +55,27 @@ Verification lives in the **middleware**, not in a dependency, on purpose:
 FastAPI reads and validates a request body before it resolves dependencies, so a
 dependency cannot refuse "before the body is read". `service_token_claims` only
 hands the verified claims to a handler. When nothing verified the request it
-raises `ServiceTokenRefused` rather than returning nothing.
-`ServiceTokenMiddleware` renders that as the same `401` envelope (on an exempt
-path, say). An app with NO middleware registers the renderer once:
+refuses with a `401` rather than returning nothing:
+
+| Setup | The 401 body |
+|---|---|
+| `ServiceTokenMiddleware` installed (the route is an exempt path) | the exact envelope |
+| no middleware, handler registered (below) | the exact envelope |
+| neither | FastAPI: `{"detail": <envelope>}`; Starlette: the sentence as plain text |
+
+Every row carries `WWW-Authenticate: FancyServiceToken error="missing"`,
+`x-request-id` and `Cache-Control: no-store`. **Registering the handler is what
+gives the exact envelope** in an app without the middleware:
 
 ```python
-from fancy_service_token import ServiceTokenRefused
-from fancy_service_token.depends import service_token_refused_handler
+from fancy_service_token.depends import ServiceTokenRefused, service_token_refused_handler
 
 app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)
 ```
 
-With neither, the refusal is an unhandled exception: a `500`, never a pass. It is
-not an `HTTPException` on purpose, because FastAPI renders those as
-`{"detail": ...}`, which is not the envelope.
+`ServiceTokenRefused` is a Starlette `HTTPException` (the class FastAPI's
+handler is registered for), so with no handler the framework still renders a
+401, never a 500.
 
 ## Starlette
 

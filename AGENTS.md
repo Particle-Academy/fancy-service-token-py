@@ -63,10 +63,12 @@ def ocr(job: Job, claims: Claims = Depends(service_token_claims)): ...
 
 - **Verification must be the middleware, not a dependency.** FastAPI reads the
   body before resolving dependencies. `service_token_claims` only hands over
-  claims. When nothing verified the request it raises `ServiceTokenRefused`,
-  which the middleware renders as the `401` envelope. **Without the middleware,
-  register `app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)`**
-  (from `fancy_service_token.depends`), or the refusal is a `500`.
+  claims. When nothing verified the request it refuses with a `401`
+  (`ServiceTokenRefused`, an `HTTPException`). Behind the middleware that is
+  the exact envelope. **Without the middleware, register
+  `app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)`**
+  (both from `fancy_service_token.depends`) for the exact envelope; without it,
+  FastAPI sends `{"detail": <envelope>}`, still a 401 with the same headers.
 - **Secrets must be at least `min_key_bytes` (32) bytes**, passed as `bytes`.
 - **`MemoryReplayStore` is per process.** Several workers need a shared store
   (an atomic `add(key, expires_at, now) -> bool`), or a nonce accepted by one

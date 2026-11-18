@@ -56,8 +56,8 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
     (
         "dependency fails open",
         "depends.py",
-        "raise ServiceTokenRefused()",
-        "return None  # type: ignore[return-value]",
+        "    if request.scope.get(MIDDLEWARE_KEY):",
+        "    return None  # type: ignore[return-value]\n    if request.scope.get(MIDDLEWARE_KEY):",
     ),
     (
         "reason back in the body",
@@ -81,7 +81,7 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
     (
         "middleware ignores a dependency refusal",
         "asgi.py",
-        "except ServiceTokenRefused as exc:",
+        "except ServiceTokenRefusal as exc:",
         "except ZeroDivisionError as exc:",
     ),
     (
@@ -89,6 +89,30 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
         "depends.py",
         "body, headers = refusal_response(reason, request_id)",
         'body, headers = b\'{"detail":"service_token_refused"}\', []',
+    ),
+    (
+        "dependency without middleware or handler is a 500",
+        "depends.py",
+        "    raise ServiceTokenRefused(\n        Reason.MISSING,",
+        "    raise ServiceTokenRefusal(Reason.MISSING)\n    raise ServiceTokenRefused(\n        Reason.MISSING,",
+    ),
+    (
+        "FastAPI detail is not the envelope",
+        "depends.py",
+        'envelope_detail=_is_fastapi(request.scope.get("app")),',
+        "envelope_detail=False,",
+    ),
+    (
+        "dependency ignores the middleware",
+        "depends.py",
+        "    if request.scope.get(MIDDLEWARE_KEY):",
+        "    if False:",
+    ),
+    (
+        "HTTPException form drops WWW-Authenticate",
+        "depends.py",
+        'if k not in (b"content-type", b"content-length")',
+        'if k not in (b"content-type", b"content-length", b"www-authenticate")',
     ),
 ]
 
