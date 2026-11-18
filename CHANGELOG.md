@@ -10,17 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [0.1.0] - 2026-11-18
 
-- **CI: the lab-certificate gate verifies against the lab's rotated key list.**
-  The lab's first signing key is retired: certificates it already issued still
-  verify, and nothing new it signs ever can. Consumers do nothing.
-
-- **Docs:** `AGENTS.md` is now the guide to using this package (install, how to find it on the Fancy MCP catalog server once it is listed, API essentials, traps). The contributor notes it held moved to `CONTRIBUTING.md`, and `CLAUDE.md` is now a symlink to it. The README points to the MCP server and to `AGENTS.md`. No code changed; nothing to do.
-
-## [0.1.0] - 2026-11-12
-
-First release (CC-fancy-0030). Not yet published.
+First release (CC-fancy-0030).
 
 ### Added
 
@@ -48,6 +40,14 @@ First release (CC-fancy-0030). Not yet published.
   `scripts/build_fixtures.py` and run byte for byte by the PHP and Node legs.
 - A sabotage sweep in CI that breaks one clause at a time and fails if the suite
   does not notice.
+
+### Changed
+
+- **CI: the lab-certificate gate verifies against the lab's rotated key list.**
+  The lab's first signing key is retired: certificates it already issued still
+  verify, and nothing new it signs ever can. Consumers do nothing.
+
+- **Docs:** `AGENTS.md` is now the guide to using this package (install, how to find it on the Fancy MCP catalog server once it is listed, API essentials, traps). The contributor notes it held moved to `CONTRIBUTING.md`, and `CLAUDE.md` is now a symlink to it. The README points to the MCP server and to `AGENTS.md`. No code changed; nothing to do.
 
 ### Notes
 
