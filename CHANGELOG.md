@@ -47,6 +47,11 @@ First release (CC-fancy-0030).
   The lab's first signing key is retired: certificates it already issued still
   verify, and nothing new it signs ever can. Consumers do nothing.
 
+- **CI: the third-party gate and the lab-certificate verifier are pinned to
+  `Particle-Academy/.github@8c620be`**, the allowlist that records the framework
+  test carve-out for this package (Starlette and FastAPI, test-only). Consumers
+  do nothing.
+
 - **Docs:** `AGENTS.md` is now the guide to using this package (install, how to find it on the Fancy MCP catalog server once it is listed, API essentials, traps). The contributor notes it held moved to `CONTRIBUTING.md`, and `CLAUDE.md` is now a symlink to it. The README points to the MCP server and to `AGENTS.md`. No code changed; nothing to do.
 
 ### Notes
