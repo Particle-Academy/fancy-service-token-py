@@ -42,14 +42,19 @@ def ocr(job: Job, claims: Claims = Depends(service_token_claims)): ...
 
 - **Starlette:** `Middleware(ServiceTokenMiddleware, verifier=verifier)`; claims
   are on `request.state.service_token`.
-- `ServiceTokenMiddleware(app, verifier=..., header="x-fancy-service-token", exempt_paths=())`.
+- `ServiceTokenMiddleware(app, verifier=..., header="x-fancy-service-token", exempt_paths=(), request_id_header="x-request-id")`.
 - The verified request id is `claims.request_id`, `current_request_id()` for the
   duration of the request, and on every log record via
   `handler.addFilter(RequestIdLogFilter())` (`%(request_id)s` in the format).
 - Refusal reasons (`Reason`): `missing`, `malformed`, `bad_signature`,
   `expired`, `not_yet_valid`, `wrong_audience`, `replayed`. A refusal is `401`
-  with `{"error": "service_token_refused", "reason": "..."}`; a WebSocket
-  handshake is closed with `1008` before `accept`.
+  with the Fancy error envelope
+  `{"error": "service_token_refused", "message": "<fixed sentence>", "requestId": "<id>"}`
+  and nothing else. **Read the reason from the header**,
+  `WWW-Authenticate: FancyServiceToken error="<reason>"`, never the body. The
+  request id is the incoming `x-request-id` when safe, else a UUID v4, and is
+  echoed as `x-request-id`. A WebSocket handshake is closed with `1008` before
+  `accept` (no body, no envelope).
 - Constructor limits and defaults (`clock_skew`, `max_lifetime`,
   `max_token_bytes`, `require_nonce`, `min_key_bytes`, `replay_store`, `clock`)
   are in the README's Configuration table.
@@ -58,7 +63,10 @@ def ocr(job: Job, claims: Claims = Depends(service_token_claims)): ...
 
 - **Verification must be the middleware, not a dependency.** FastAPI reads the
   body before resolving dependencies. `service_token_claims` only hands over
-  claims, and refuses with `401` if the middleware is missing.
+  claims. When nothing verified the request it raises `ServiceTokenRefused`,
+  which the middleware renders as the `401` envelope. **Without the middleware,
+  register `app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)`**
+  (from `fancy_service_token.depends`), or the refusal is a `500`.
 - **Secrets must be at least `min_key_bytes` (32) bytes**, passed as `bytes`.
 - **`MemoryReplayStore` is per process.** Several workers need a shared store
   (an atomic `add(key, expires_at, now) -> bool`), or a nonce accepted by one

@@ -13,17 +13,20 @@ from typing import Any
 import pytest
 
 from fancy_service_token import (
+    REFUSAL_MESSAGES,
     Claims,
     Key,
     MemoryReplayStore,
+    Reason,
     RequestIdLogFilter,
     ServiceTokenMiddleware,
     Verifier,
     current_request_id,
 )
 
-from .asgi import call
+from .asgi import Result, call
 from .conftest import load_fixtures
+from .schema import MESSAGES_PATH, MESSAGES_SHA256, SCHEMA_PATH, SCHEMA_SHA256, UUID_V4, load_messages, sha256, validate
 
 FX = load_fixtures()
 VALID = FX["sign"][0]["token"]
@@ -76,6 +79,23 @@ async def exploding_receive() -> Any:
     raise AssertionError("the body stream was read")
 
 
+MESSAGES = load_messages()
+
+
+def assert_refusal(result: Result, reason: str) -> None:
+    """The Fancy error envelope, exactly {error, message, requestId}; the reason in WWW-Authenticate."""
+    assert result.status == 401
+    body = result.json()
+    assert validate(body) == []
+    assert sorted(body) == ["error", "message", "requestId"]
+    assert body["error"] == "service_token_refused"
+    assert body["message"] == MESSAGES["messages"][reason]
+    assert result.headers["www-authenticate"] == f'FancyServiceToken error="{reason}"'
+    assert result.headers["x-request-id"] == body["requestId"]
+    assert result.headers["cache-control"] == "no-store"
+    assert result.headers["content-length"] == str(len(result.body))
+
+
 # ---------------------------------------------------------------- raw ASGI
 
 
@@ -92,8 +112,8 @@ async def exploding_receive() -> Any:
 def test_refused_request_never_touches_handler_or_body(headers: list[tuple[bytes, bytes]], reason: str) -> None:
     spy = Spy()
     result = call(ServiceTokenMiddleware(spy, verifier=make_verifier()), headers=headers, receive=exploding_receive)
-    assert result.status == 401
-    assert result.json() == {"error": "service_token_refused", "reason": reason}
+    assert_refusal(result, reason)
+    assert UUID_V4.match(result.json()["requestId"])
     assert spy.calls == 0
     assert result.receive_calls == 0
 
@@ -106,8 +126,7 @@ def test_replayed_nonce_is_refused_before_the_body() -> None:
     again = call(
         ServiceTokenMiddleware(spy, verifier=mw.verifier), headers=[(HEADER, VALID.encode())], receive=exploding_receive
     )
-    assert again.status == 401
-    assert again.json()["reason"] == "replayed"
+    assert_refusal(again, "replayed")
     assert spy.calls == 0
     assert again.receive_calls == 0
 
@@ -119,7 +138,7 @@ def test_two_token_headers_are_refused_as_malformed() -> None:
         headers=[(HEADER, VALID.encode()), (HEADER, VALID.encode())],
         receive=exploding_receive,
     )
-    assert result.json()["reason"] == "malformed"
+    assert_refusal(result, "malformed")
     assert spy.calls == 0
 
 
@@ -140,7 +159,7 @@ def test_header_name_is_configurable_and_case_insensitive() -> None:
     spy = Spy()
     mw = ServiceTokenMiddleware(spy, verifier=make_verifier(), header="X-Sidecar-Auth")
     assert call(mw, headers=[(b"x-sidecar-auth", VALID.encode())]).status == 200
-    assert call(mw, headers=[(HEADER, VALID.encode())], receive=exploding_receive).json()["reason"] == "missing"
+    assert_refusal(call(mw, headers=[(HEADER, VALID.encode())], receive=exploding_receive), "missing")
 
 
 def test_exempt_paths_are_exact_matches_only() -> None:
@@ -189,8 +208,7 @@ def test_a_verifier_that_raises_fails_closed_without_exception_text(caplog: pyte
         result = call(
             ServiceTokenMiddleware(spy, verifier=v), headers=[(HEADER, VALID.encode())], receive=exploding_receive
         )
-    assert result.status == 401
-    assert result.json() == {"error": "service_token_refused", "reason": "malformed"}
+    assert_refusal(result, "malformed")
     assert b"secret detail" not in result.body
     assert "secret detail" not in caplog.text
     assert SECRET.hex() not in caplog.text
@@ -238,6 +256,62 @@ def test_request_id_log_filter_stamps_records() -> None:
     assert [getattr(r, "request_id", None) for r in records] == ["req-01HZX3K8Q2", "-"]
 
 
+# ---------------------------------------------------------------- the envelope
+
+
+def test_schema_copy_is_byte_identical() -> None:
+    assert sha256(SCHEMA_PATH.read_bytes()) == SCHEMA_SHA256
+
+
+def test_validator_rejects_the_0_1_0_body_so_a_pass_means_something() -> None:
+    assert validate({"error": "service_token_refused", "reason": "expired"}) != []
+    assert validate({"error": "service_token_refused", "message": "x", "requestId": "r", "reason": "expired"}) != []
+    assert validate({"error": "service_token_refused", "message": "x", "requestId": "r"}) == []
+
+
+def test_one_fixed_sentence_per_reason_identical_to_the_shared_fixture() -> None:
+    assert sha256(MESSAGES_PATH.read_bytes()) == MESSAGES_SHA256
+    assert {r.value: m for r, m in REFUSAL_MESSAGES.items()} == MESSAGES["messages"]
+    assert sorted(MESSAGES["messages"]) == sorted(r.value for r in Reason)
+    assert MESSAGES["status"] == 401
+    assert MESSAGES["error"] == "service_token_refused"
+
+
+def test_a_well_formed_incoming_request_id_is_echoed() -> None:
+    rid = b"req-01HZX3K8Q2.a:b_c"
+    result = call(ServiceTokenMiddleware(Spy(), verifier=make_verifier()), headers=[(b"x-request-id", rid)])
+    assert_refusal(result, "missing")
+    assert result.json()["requestId"] == rid.decode()
+    assert result.headers["x-request-id"] == rid.decode()
+
+
+@pytest.mark.parametrize("bad", [b"has space", b"x" * 129, b"semi;colon", b"", "caf\u00e9".encode(), b"line\nbreak"])
+def test_an_unsafe_incoming_request_id_is_replaced(bad: bytes) -> None:
+    result = call(ServiceTokenMiddleware(Spy(), verifier=make_verifier()), headers=[(b"x-request-id", bad)])
+    assert_refusal(result, "missing")
+    assert UUID_V4.match(result.json()["requestId"])
+
+
+def test_a_duplicated_incoming_request_id_is_replaced() -> None:
+    result = call(
+        ServiceTokenMiddleware(Spy(), verifier=make_verifier()),
+        headers=[(b"x-request-id", b"a"), (b"x-request-id", b"b")],
+    )
+    assert UUID_V4.match(result.json()["requestId"])
+
+
+def test_each_refusal_gets_a_fresh_id() -> None:
+    mw = ServiceTokenMiddleware(Spy(), verifier=make_verifier())
+    assert call(mw).json()["requestId"] != call(mw).json()["requestId"]
+
+
+def test_the_request_id_header_is_configurable() -> None:
+    mw = ServiceTokenMiddleware(Spy(), verifier=make_verifier(), request_id_header="X-Correlation-Id")
+    result = call(mw, headers=[(b"x-correlation-id", b"corr-1")])
+    assert result.json()["requestId"] == "corr-1"
+    assert result.headers["x-correlation-id"] == "corr-1"
+
+
 # ---------------------------------------------------------------- Starlette
 
 
@@ -263,8 +337,7 @@ def test_starlette_route_with_body_is_never_reached_on_refusal() -> None:
         middleware=[Middleware(ServiceTokenMiddleware, verifier=make_verifier())],
     )
     refused = call(app, headers=[(HEADER, TAMPERED.encode())], receive=exploding_receive)
-    assert refused.status == 401
-    assert refused.json()["reason"] == "bad_signature"
+    assert_refusal(refused, "bad_signature")
     assert hits == []
     assert refused.receive_calls == 0
 

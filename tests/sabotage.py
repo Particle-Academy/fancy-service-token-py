@@ -56,8 +56,39 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
     (
         "dependency fails open",
         "depends.py",
-        'raise HTTPException(status_code=401, detail="service_token_refused")',
+        "raise ServiceTokenRefused()",
         "return None  # type: ignore[return-value]",
+    ),
+    (
+        "reason back in the body",
+        "asgi.py",
+        '"requestId": request_id},',
+        '"requestId": request_id, "reason": reason.value},',
+    ),
+    (
+        "unsafe request id echoed",
+        "asgi.py",
+        "if len(values) == 1 and 1 <= len(values[0]) <= 128 and all(b in _RID_CHARS for b in values[0]):",
+        "if len(values) == 1:",
+    ),
+    (
+        "request id header not echoed",
+        "asgi.py",
+        '(request_id_header.lower().encode("latin-1"), request_id.encode("ascii")),',
+        "",
+    ),
+    ("sentence drifts", "asgi.py", '"The service token has expired."', '"The token has expired."'),
+    (
+        "middleware ignores a dependency refusal",
+        "asgi.py",
+        "except ServiceTokenRefused as exc:",
+        "except ZeroDivisionError as exc:",
+    ),
+    (
+        "handler renders the old shape",
+        "depends.py",
+        "body, headers = refusal_response(reason, request_id)",
+        'body, headers = b\'{"detail":"service_token_refused"}\', []',
     ),
 ]
 

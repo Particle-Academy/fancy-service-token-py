@@ -1,11 +1,12 @@
 """Verify Fancy service tokens (`fst1`) in a Python sidecar. Standard library only."""
 
 from ._token import Claims, Key, MemoryReplayStore, Reason, ReplayStore, Verdict, Verifier
-from .asgi import RequestIdLogFilter, ServiceTokenMiddleware, current_request_id
+from .asgi import REFUSAL_MESSAGES, RequestIdLogFilter, ServiceTokenMiddleware, ServiceTokenRefused, current_request_id
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
+    "REFUSAL_MESSAGES",
     "Claims",
     "Key",
     "MemoryReplayStore",
@@ -13,6 +14,7 @@ __all__ = [
     "ReplayStore",
     "RequestIdLogFilter",
     "ServiceTokenMiddleware",
+    "ServiceTokenRefused",
     "Verdict",
     "Verifier",
     "__version__",

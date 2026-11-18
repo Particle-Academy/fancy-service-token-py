@@ -3,3 +3,4 @@
 # it would fail the suite on a perfectly good copy.
 * text=auto eol=lf
 conformance/*.json -text
+tests/fixtures/*.json -text

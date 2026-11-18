@@ -54,9 +54,21 @@ def ocr(job: Job, claims: Claims = Depends(service_token_claims)):
 Verification lives in the **middleware**, not in a dependency, on purpose:
 FastAPI reads and validates a request body before it resolves dependencies, so a
 dependency cannot refuse "before the body is read". `service_token_claims` only
-hands the verified claims to a handler. If the middleware is missing it refuses
-with `401` rather than returning nothing, so a forgotten `add_middleware` fails
-closed.
+hands the verified claims to a handler. When nothing verified the request it
+raises `ServiceTokenRefused` rather than returning nothing.
+`ServiceTokenMiddleware` renders that as the same `401` envelope (on an exempt
+path, say). An app with NO middleware registers the renderer once:
+
+```python
+from fancy_service_token import ServiceTokenRefused
+from fancy_service_token.depends import service_token_refused_handler
+
+app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)
+```
+
+With neither, the refusal is an unhandled exception: a `500`, never a pass. It is
+not an `HTTPException` on purpose, because FastAPI renders those as
+`{"detail": ...}`, which is not the envelope.
 
 ## Starlette
 
@@ -73,23 +85,40 @@ async def handler(request):
 ## Refusals
 
 Every refusal is `401` with `Cache-Control: no-store`, a
-`WWW-Authenticate: FancyServiceToken error="<reason>"` header, and this body:
+`WWW-Authenticate: FancyServiceToken error="<reason>"` header and an
+`x-request-id` header. The body is the Fancy error envelope (the `fancy-http-errors`
+`envelope.schema.json`): exactly `error`, `message` and `requestId`, nothing
+else. **The reason is in the `WWW-Authenticate` header, never in the body**;
+`message` is one fixed English sentence per reason, identical in the Python and
+Node legs (`conformance/refusal-messages.json`). `requestId` is the incoming
+`x-request-id` when it matches `^[A-Za-z0-9._:-]{1,128}$`, else a fresh UUID v4,
+and is echoed in an `x-request-id` response header.
 
-```json
-{"error": "service_token_refused", "reason": "expired"}
+```http
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: FancyServiceToken error="expired"
+x-request-id: 3f6c0a52-6f1e-4b43-9d55-1f0d2b1f7e10
+Cache-Control: no-store
+Content-Type: application/json
+
+{"error":"service_token_refused","message":"The service token has expired.","requestId":"3f6c0a52-6f1e-4b43-9d55-1f0d2b1f7e10"}
 ```
 
-| reason | means |
-|---|---|
-| `missing` | no token header, or an empty one |
-| `malformed` | not a well-formed `fst1` token (see the format below), longer than `max_token_bytes`, a lifetime above `max_lifetime`, no nonce while `require_nonce` is on, or the token header sent twice |
-| `bad_signature` | the HMAC does not match, the key id is unknown, the key is a previous key past its grace window, or the issuer is not the configured one (no key is held for that issuer) |
-| `expired` | `now >= exp + clock_skew` |
-| `not_yet_valid` | `now + clock_skew < iat` |
-| `wrong_audience` | signed correctly, for a different sidecar |
-| `replayed` | the nonce was already accepted (or the replay store is full: it fails closed) |
+The request-id header name is the `request_id_header` argument
+(default `x-request-id`).
 
-A WebSocket handshake is refused with a close (`1008`) before `accept`.
+| reason | means | `message` |
+|---|---|---|
+| `missing` | no token header, or an empty one | This request carries no service token. |
+| `malformed` | not a well-formed `fst1` token (see the format below), longer than `max_token_bytes`, a lifetime above `max_lifetime`, no nonce while `require_nonce` is on, or the token header sent twice | The service token could not be read. |
+| `bad_signature` | the HMAC does not match, the key id is unknown, the key is a previous key past its grace window, or the issuer is not the configured one (no key is held for that issuer) | The service token signature does not match a known key. |
+| `expired` | `now >= exp + clock_skew` | The service token has expired. |
+| `not_yet_valid` | `now + clock_skew < iat` | The service token is not valid yet. |
+| `wrong_audience` | signed correctly, for a different sidecar | The service token was issued for a different service. |
+| `replayed` | the nonce was already accepted (or the replay store is full: it fails closed) | The service token has already been used. |
+
+A WebSocket handshake is refused with a close (`1008`) before `accept`: a close
+frame has no body, so no envelope, and the reason is not sent.
 
 ## Request id
 

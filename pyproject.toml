@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 # The repository is `fancy-service-token-py`; the distribution drops the suffix,
 # like every other Python package in the kit (publishing.md).
 name = "fancy-service-token"
-version = "0.1.0"
+version = "0.2.0"
 description = "Verify Fancy service tokens in a Python sidecar: a framework-free core plus Starlette/FastAPI middleware that refuses before the body is read, with a named reason. Standard library only."
 readme = "README.md"
 requires-python = ">=3.11"

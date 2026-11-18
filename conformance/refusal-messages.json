@@ -1,0 +1,17 @@
+{
+  "description": "The 401 a sidecar sends when it refuses a service token. Body: the Fancy error envelope (fancy-http-errors envelope.schema.json), exactly {error, message, requestId}. The reason travels in WWW-Authenticate, never in the body. Pinned by SHA-256 in the Python and Node legs, so the sentences below are identical in both by test result.",
+  "status": 401,
+  "error": "service_token_refused",
+  "wwwAuthenticate": "FancyServiceToken error=\"{reason}\"",
+  "requestIdHeader": "x-request-id",
+  "requestIdPattern": "^[A-Za-z0-9._:-]{1,128}$",
+  "messages": {
+    "missing": "This request carries no service token.",
+    "malformed": "The service token could not be read.",
+    "bad_signature": "The service token signature does not match a known key.",
+    "expired": "The service token has expired.",
+    "not_yet_valid": "The service token is not valid yet.",
+    "wrong_audience": "The service token was issued for a different service.",
+    "replayed": "The service token has already been used."
+  }
+}

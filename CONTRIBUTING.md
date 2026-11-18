@@ -44,6 +44,12 @@ signer and a verifier) and `fancy-service-token-js` (Node verifier).
 - **Fail closed.** `verify()` never raises; an unexpected error is `malformed`.
   A full replay store refuses. `service_token_claims` without the middleware
   refuses.
+- **A refusal body is the Fancy error envelope and nothing else**:
+  `{error, message, requestId}`, validated in the suite against a byte copy of
+  `fancy-http-errors/envelope.schema.json` (`tests/fixtures/`). The reason goes
+  in `WWW-Authenticate`. `REFUSAL_MESSAGES` must equal
+  `conformance/refusal-messages.json`, which is byte-identical (SHA-256 pinned)
+  in the Node leg; change a sentence in both, never one.
 - The `Reason` values are a fixed public contract. Adding one is a breaking
   change for every leg.
 

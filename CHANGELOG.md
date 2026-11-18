@@ -10,6 +10,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-18
+
+### Changed
+
+- **BREAKING: the 401 refusal body is now the Fancy error envelope**
+  (`fancy-http-errors` `envelope.schema.json`), exactly
+  `{"error": "service_token_refused", "message": "<sentence>", "requestId": "<id>"}`.
+  **The body no longer has `reason`; read it from `WWW-Authenticate`**
+  (`FancyServiceToken error="<reason>"`, unchanged since 0.1.0). If you only
+  checked the 401 status, do nothing.
+- **BREAKING (FastAPI/Starlette, only without the middleware):**
+  `service_token_claims` raises `ServiceTokenRefused` instead of
+  `HTTPException(401, detail="service_token_refused")`, because FastAPI renders
+  an `HTTPException` as `{"detail": ...}`. `ServiceTokenMiddleware` renders it as
+  the same 401 envelope, so with the middleware installed, do nothing. An app
+  that uses the dependency WITHOUT the middleware must register
+  `app.add_exception_handler(ServiceTokenRefused, service_token_refused_handler)`;
+  otherwise the refusal is a 500 (still never a pass).
+- A WebSocket refusal is unchanged: close `1008` before `accept`, no body.
+
+### Added
+
+- `message`: one fixed English sentence per reason, `REFUSAL_MESSAGES`.
+  Identical to the Node leg; both are pinned to
+  `conformance/refusal-messages.json` (shipped in the sdist).
+- `requestId`: the incoming `x-request-id` when it matches
+  `^[A-Za-z0-9._:-]{1,128}$` (sent once), else a fresh UUID v4; echoed as an
+  `x-request-id` response header. `ServiceTokenMiddleware(request_id_header=...)`
+  changes the header name.
+- `ServiceTokenRefused` and `fancy_service_token.depends.service_token_refused_handler`.
+- The suite validates every refusal body against a byte copy of the envelope
+  schema with a small first-party validator (no new dependency).
+
 ## [0.1.0] - 2026-11-18
 
 First release (CC-fancy-0030).
