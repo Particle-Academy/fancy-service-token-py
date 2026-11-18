@@ -35,6 +35,7 @@ verifier = Verifier(
 )
 app.add_middleware(ServiceTokenMiddleware, verifier=verifier)
 
+
 @app.post("/ocr")
 def ocr(job: Job, claims: Claims = Depends(service_token_claims)): ...
 ```
