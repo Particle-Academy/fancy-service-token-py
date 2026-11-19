@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI: re-pin org third-party allowlist to 2614224
+
 ## [0.2.0] - 2026-11-18
 
 ### Changed
